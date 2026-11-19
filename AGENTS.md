@@ -22,6 +22,7 @@
    - 修正できる指摘には対応し、人間の判断が必要な指摘は報告する。
    - すべての変更について人間のレビューを受け、必要なレビューを通過したことを確認する。
 2. レビュー通過後に PR を作成し、CI を実行して結果を確認する。PR は人間が差分を追いやすい規模にする。複数の PR が必要な場合は、先行 PR のブランチを後続 PR のベースにして作成する。[Stacked Pull Requests](https://docs.github.com/en/pull-requests/get-started/about-stacked-prs)
+   - PR 本文は [PR テンプレート](.github/pull_request_template.md)を使い、プレースホルダーを置き換える。詳細が不要な場合は「詳細」の見出しごと省略する。
 
 ## マージ後の改善
 
