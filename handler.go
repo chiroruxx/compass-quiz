@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,7 +15,8 @@ type handler struct {
 
 func (h handler) GetStudents(ctx *gin.Context, params api.GetStudentsParams) {
 	if params.FacilitatorId < 1 {
-		ctx.AbortWithStatus(http.StatusBadRequest)
+		_ = ctx.Error(fmt.Errorf("%w: facilitator ID must be at least 1", errValidation))
+		ctx.Abort()
 
 		return
 	}
