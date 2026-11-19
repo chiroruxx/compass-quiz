@@ -1,0 +1,1 @@
+[ARCHITECTURE.md](../../ARCHITECTURE.md)参照
