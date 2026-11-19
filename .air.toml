@@ -1,0 +1,8 @@
+tmp_dir = ".air"
+
+[build]
+cmd = "go build -o ./.air/compass-quiz ."
+entrypoint = ["./.air/compass-quiz"]
+include_ext = ["go"]
+exclude_dir = [".air", ".git"]
+poll = true
