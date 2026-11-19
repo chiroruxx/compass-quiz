@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            tools/*/go.sum
+      - name: Run golangci-lint
+        run: go tool -modfile=tools/golangci-lint/go.mod golangci-lint run
+      - name: Run actionlint
+        run: go tool -modfile=tools/actionlint/go.mod actionlint
+      - name: Run tests
+        run: go test ./...

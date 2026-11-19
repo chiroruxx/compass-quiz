@@ -1,0 +1,16 @@
+openapi: 3.0.3
+info:
+  title: Compass Quiz API
+  version: 0.1.0
+paths:
+  /healthz:
+    get:
+      operationId: getHealthz
+      summary: Check whether the HTTP server is running
+      responses:
+        '200':
+          description: The HTTP server is running
+          content:
+            text/plain:
+              schema:
+                type: string
