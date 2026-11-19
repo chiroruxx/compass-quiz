@@ -11,7 +11,7 @@ func (useCase) listStudents(_ int) ([]student, int) {
 	students := []student{
 		newStudent(
 			1,
-			"佐藤", //nolint:gosmopolitan // Use the name from the assignment's response example.
+			"佐藤",
 			newStudentAccount("foo123"),
 			newClass(1, "クラスA"),
 		),

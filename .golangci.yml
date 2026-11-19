@@ -1,6 +1,9 @@
 version: "2"
 linters:
   default: all
+  disable:
+    # The assignment includes Japanese names in example data.
+    - gosmopolitan
   settings:
     testpackage:
       # Tests may use unexported handlers and router setup.
