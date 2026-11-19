@@ -10,7 +10,7 @@ docker compose up -d
 
 ### テスト
 
-MySQL の起動後、API コンテナでユニットテストと HTTP テストをまとめて実行する。HTTP テストは、MySQL の初回起動時に作成される `compass_quiz_test` を使い、テスト内で用意したデータをロールバックする。
+API コンテナでユニットテストと HTTP テストをまとめて実行する。
 
 ```sh
 docker compose exec api go test -count=1 ./...

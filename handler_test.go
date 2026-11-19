@@ -8,11 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	healthBody        = "ok\n"
-	healthContentType = "text/plain; charset=utf-8"
-)
-
 func TestHealthHandler(t *testing.T) {
 	t.Parallel()
 
@@ -20,21 +15,17 @@ func TestHealthHandler(t *testing.T) {
 	ctx, _ := gin.CreateTestContext(response)
 	healthHandler{}.GetHealthz(ctx)
 
-	assertHealthz(t, response.Code, response.Header().Get("Content-Type"), response.Body.String())
-}
-
-func assertHealthz(t *testing.T, status int, contentType, body string) {
-	t.Helper()
-
-	if status != http.StatusOK {
+	if status := response.Code; status != http.StatusOK {
 		t.Errorf("status = %d, want %d", status, http.StatusOK)
 	}
 
-	if contentType != healthContentType {
-		t.Errorf("Content-Type = %q, want %q", contentType, healthContentType)
+	const wantContentType = "text/plain; charset=utf-8"
+	if contentType := response.Header().Get("Content-Type"); contentType != wantContentType {
+		t.Errorf("Content-Type = %q, want %q", contentType, wantContentType)
 	}
 
-	if body != healthBody {
-		t.Errorf("body = %q, want %q", body, healthBody)
+	const wantBody = "ok\n"
+	if body := response.Body.String(); body != wantBody {
+		t.Errorf("body = %q, want %q", body, wantBody)
 	}
 }

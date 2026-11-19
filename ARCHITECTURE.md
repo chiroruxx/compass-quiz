@@ -35,7 +35,11 @@
 - ユニットテスト
   - DB なしで実行する。
 - HTTP テスト
-  - `httptest` とテスト用 MySQL を使い、ハンドラーから SQL までを通して API の振る舞いを確認する。
+  - `httptest` で API の振る舞いを確認する。DB を使う API のテストでは、テスト用 MySQL を用意し、CI でも実行する。
+
+### CI ツール
+
+- golangci-lint と actionlint のバージョンは、`tools/` 配下の個別の `go.mod` で固定する。両ツールを同じモジュールに入れると、必要とする `go.yaml.in/yaml/v4` の API が異なるため、選択されたバージョンで actionlint をビルドできない。
 
 ## TLS 関連
 

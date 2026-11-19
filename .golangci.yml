@@ -3,7 +3,8 @@ linters:
   default: all
   settings:
     testpackage:
-      skip-regexp: '(export|internal|handler|route)_test\.go$'
+      # Tests may use unexported handlers and router setup.
+      skip-regexp: '_test\.go$'
     depguard:
       rules:
         main:
@@ -11,7 +12,6 @@ linters:
             - $gostd
             - compass-quiz/api$
             - github.com/gin-gonic/gin$
-            - github.com/go-sql-driver/mysql$
 formatters:
   enable:
     - gofmt

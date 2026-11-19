@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
@@ -22,5 +22,5 @@ jobs:
         run: go tool -modfile=tools/golangci-lint/go.mod golangci-lint run
       - name: Run actionlint
         run: go tool -modfile=tools/actionlint/go.mod actionlint
-      - name: Run unit tests
-        run: go test -short ./...
+      - name: Run tests
+        run: go test ./...

@@ -10,7 +10,7 @@
 
 - `compose.yaml` に開発用の Gin サーバーを追加し、既存の MySQL と一緒に起動する。開発サーバーは HTTP で起動し、ソースをマウントして Air で監視する。
 - 起動確認用の `GET /healthz` を OpenAPI で定義し、`oapi-codegen` で Gin 用のコードを `api/` に生成する。
-- DB なしのユニットテストと、同じ MySQL コンテナ上のテスト用 DB を使う `httptest` の実行環境を整える。機能ごとのテストケースは各ステップで追加する。
+- `GET /healthz` のユニットテストと `httptest` を使う HTTP テストを整える。同じ MySQL コンテナに、後続の HTTP テストで使うテスト用 DB を作成する。
 - リモートリポジトリを用意し、CI で `go test`、`golangci-lint`、`actionlint` を実行する。golangci-lint では全リンターを有効にし、Go コードのフォーマットも確認する。
 - **完了条件** `docker compose up` で開発環境が起動し、Go ファイルの変更で API が再ビルド・再起動する。両方のテストをローカルで実行でき、CI の3つのチェックが通る。
 
@@ -22,7 +22,7 @@
 ## 4. MySQL から生徒一覧を取得
 
 - `sqlc` でデータアクセスコードを生成し、ハンドラー、ユースケース、リポジトリ、MySQL をつなぐ。教師 ID で絞り込み、クラス情報と `totalCount` を返す。
-- テスト用 MySQL を使う HTTP テストを CI に追加する。
+- テスト用 MySQL を使う HTTP テストを追加し、ローカルと CI の両方で実行する。
 - **完了条件** 初期データで `facilitator_id=1` を指定すると、生徒 ID `1, 4, 7, 10` が ID の昇順で返り、`totalCount` が `4` になる。CI でユニットテストと HTTP テストが通る。
 
 ## 5. 検索
