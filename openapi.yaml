@@ -3,14 +3,59 @@ info:
   title: Compass Quiz API
   version: 0.1.0
 paths:
-  /healthz:
+  /students:
     get:
-      operationId: getHealthz
-      summary: Check whether the HTTP server is running
+      operationId: getStudents
+      summary: List students for a facilitator
+      parameters:
+        - name: facilitator_id
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
       responses:
         '200':
-          description: The HTTP server is running
+          description: Student list and total count
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
+                $ref: '#/components/schemas/StudentsResponse'
+        '400':
+          description: Missing or invalid facilitator ID
+components:
+  schemas:
+    StudentsResponse:
+      type: object
+      required: [students, totalCount]
+      properties:
+        students:
+          type: array
+          items:
+            $ref: '#/components/schemas/Student'
+        totalCount:
+          type: integer
+    Student:
+      type: object
+      required: [id, name, loginId, classroom]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          x-go-type: uint64
+        name:
+          type: string
+        loginId:
+          type: string
+        classroom:
+          $ref: '#/components/schemas/Classroom'
+    Classroom:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          x-go-type: uint64
+        name:
+          type: string
