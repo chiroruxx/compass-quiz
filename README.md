@@ -60,4 +60,4 @@ docker compose exec api go tool -modfile=tools/actionlint/go.mod actionlint
 以下のテストを用意し、自動で実行できるようにする。
 
 - ユニットテストは DB を使わず、必要に応じてモックを使う。
-- HTTP テストは `httptest` とテスト用の MySQL を使い、API 単位で実行する。
+- HTTP テストは `httptest` を使い、API 単位で実行する。DB に接続する API のテストにはテスト用の MySQL を使う。

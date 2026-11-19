@@ -1,45 +1,96 @@
 package main
 
 import (
-	"io"
+	"encoding/json/jsontext"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-func TestHealthRoute(t *testing.T) {
+func TestStudentsRoute(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(newRouter())
-	t.Cleanup(server.Close)
+	//nolint:gosmopolitan // Use the names from the assignment's response example.
+	const wantBody = `{
+		"students": [{
+			"id": 1,
+			"name": "佐藤",
+			"loginId": "foo123",
+			"classroom": {"id": 1, "name": "クラスA"}
+		}],
+		"totalCount": 1
+	}`
 
-	request, err := http.NewRequestWithContext(t.Context(), http.MethodGet, server.URL+"/healthz", nil)
+	want := jsontext.Value(wantBody)
+
+	err := want.Canonicalize()
 	if err != nil {
-		t.Fatalf("create health request: %v", err)
+		t.Fatalf("canonicalize expected JSON: %v", err)
 	}
 
-	response, err := server.Client().Do(request)
-	if err != nil {
-		t.Fatalf("send health request: %v", err)
+	for _, facilitatorID := range []string{"1", "999"} {
+		t.Run(facilitatorID, func(t *testing.T) {
+			t.Parallel()
+
+			path := "/students?facilitator_id=" + facilitatorID
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, path, nil)
+			response := httptest.NewRecorder()
+			newRouter().ServeHTTP(response, request)
+
+			if response.Code != http.StatusOK {
+				t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+			}
+
+			const wantContentType = "application/json; charset=utf-8"
+
+			if contentType := response.Header().Get("Content-Type"); contentType != wantContentType {
+				t.Errorf("Content-Type = %q, want %q", contentType, wantContentType)
+			}
+
+			body := response.Body.String()
+			got := jsontext.Value(body)
+
+			err := got.Canonicalize()
+			if err != nil {
+				t.Fatalf("canonicalize response JSON: %v", err)
+			}
+
+			if got.String() != want.String() {
+				t.Errorf("response = %s, want %s", body, wantBody)
+			}
+		})
 	}
+}
 
-	t.Cleanup(func() {
-		err := response.Body.Close()
-		if err != nil {
-			t.Errorf("close response body: %v", err)
-		}
-	})
+func TestStudentsRouteInvalidFacilitatorID(t *testing.T) {
+	t.Parallel()
 
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		t.Fatalf("read health response: %v", err)
+	cases := []struct {
+		name string
+		path string
+	}{
+		{name: "missing", path: "/students"},
+		{name: "empty", path: "/students?facilitator_id="},
+		{name: "text", path: "/students?facilitator_id=abc"},
+		{name: "fraction", path: "/students?facilitator_id=1.5"},
+		{name: "zero", path: "/students?facilitator_id=0"},
+		{name: "negative", path: "/students?facilitator_id=-1"},
 	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	if response.StatusCode != http.StatusOK {
-		t.Errorf("status = %d, want %d", response.StatusCode, http.StatusOK)
-	}
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, tc.path, nil)
+			response := httptest.NewRecorder()
+			newRouter().ServeHTTP(response, request)
 
-	if string(body) != "ok\n" {
-		t.Errorf("body = %q, want %q", body, "ok\n")
+			if response.Code != http.StatusBadRequest {
+				t.Errorf("status = %d, want %d", response.Code, http.StatusBadRequest)
+			}
+
+			if response.Body.Len() != 0 {
+				t.Errorf("body = %q, want empty", response.Body.String())
+			}
+		})
 	}
 }

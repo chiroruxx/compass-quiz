@@ -4,14 +4,43 @@
 package api
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/oapi-codegen/runtime"
 )
+
+// Classroom defines model for Classroom.
+type Classroom struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+// Student defines model for Student.
+type Student struct {
+	Classroom Classroom `json:"classroom"`
+	Id        int       `json:"id"`
+	LoginId   string    `json:"loginId"`
+	Name      string    `json:"name"`
+}
+
+// StudentsResponse defines model for StudentsResponse.
+type StudentsResponse struct {
+	Students   []Student `json:"students"`
+	TotalCount int       `json:"totalCount"`
+}
+
+// GetStudentsParams defines parameters for GetStudents.
+type GetStudentsParams struct {
+	FacilitatorId int `form:"facilitator_id" json:"facilitator_id"`
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// GetHealthz Check whether the HTTP server is running
-	// (GET /healthz)
-	GetHealthz(c *gin.Context)
+	// GetStudents List students for a facilitator
+	// (GET /students)
+	GetStudents(c *gin.Context, params GetStudentsParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -23,8 +52,22 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(c *gin.Context)
 
-// GetHealthz operation middleware
-func (siw *ServerInterfaceWrapper) GetHealthz(c *gin.Context) {
+// GetStudents operation middleware
+func (siw *ServerInterfaceWrapper) GetStudents(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetStudentsParams
+
+	// ------------- Required query parameter "facilitator_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "facilitator_id", c.Request.URL.Query(), &params.FacilitatorId, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter facilitator_id: %w", err), http.StatusBadRequest)
+		return
+	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -33,7 +76,7 @@ func (siw *ServerInterfaceWrapper) GetHealthz(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetHealthz(c)
+	siw.Handler.GetStudents(c, params)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -63,5 +106,5 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
-	router.GET(options.BaseURL+"/healthz", wrapper.GetHealthz)
+	router.GET(options.BaseURL+"/students", wrapper.GetStudents)
 }

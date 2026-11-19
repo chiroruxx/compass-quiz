@@ -9,7 +9,14 @@ import (
 func newRouter() *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery())
-	api.RegisterHandlers(router, healthHandler{})
+
+	var options api.GinServerOptions
+
+	options.ErrorHandler = func(ctx *gin.Context, _ error, status int) {
+		// Return the generated router's error status with an empty response body.
+		ctx.AbortWithStatus(status)
+	}
+	api.RegisterHandlersWithOptions(router, handler{usecase: usecase{}}, options)
 
 	return router
 }
