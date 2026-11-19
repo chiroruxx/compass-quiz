@@ -15,7 +15,7 @@
 
 ## レビュー・PR・CI
 
-1. 各ステップの完了条件を確認したら、コード変更がある場合は [実装ステップのレビュースキル `$review-step`](.agents/skills/review-step/SKILL.md) を使う。スキルの指摘のうち修正できるものは修正し、人間の判断が必要なものは報告する。すべての変更について人間のレビューを受け、必要なレビューを通過したことを確認する。
+1. 各ステップの完了条件を確認したら、コード変更には [実装ステップのレビュースキル `$review-step`](.agents/skills/review-step/SKILL.md)、Markdown の変更には [ドキュメントのレビュースキル `$review-markdown`](.agents/skills/review-markdown/SKILL.md) を使う。スキルの指摘のうち修正できるものは修正し、人間の判断が必要なものは報告する。すべての変更について人間のレビューを受け、必要なレビューを通過したことを確認する。
 2. レビュー通過後に PR を作成し、CI を実行して結果を確認する。PR は人間が差分を追いやすい規模にする。複数の PR が必要な場合は、先行 PR のブランチを後続 PR のベースにして作成する。[Stacked Pull Requests](https://docs.github.com/en/pull-requests/get-started/about-stacked-prs)
 
 ## マージ後の改善
