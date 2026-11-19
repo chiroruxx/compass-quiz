@@ -16,7 +16,7 @@ func newRouter() *gin.Engine {
 		// Return the generated router's error status with an empty response body.
 		ctx.AbortWithStatus(status)
 	}
-	api.RegisterHandlersWithOptions(router, handler{usecase: usecase{}}, options)
+	api.RegisterHandlersWithOptions(router, handler{useCase: useCase{}}, options)
 
 	return router
 }

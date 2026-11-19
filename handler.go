@@ -9,7 +9,7 @@ import (
 )
 
 type handler struct {
-	usecase usecase
+	useCase useCase
 }
 
 func (h handler) GetStudents(ctx *gin.Context, params api.GetStudentsParams) {
@@ -19,7 +19,7 @@ func (h handler) GetStudents(ctx *gin.Context, params api.GetStudentsParams) {
 		return
 	}
 
-	students, totalCount := h.usecase.listStudents(params.FacilitatorId)
+	students, totalCount := h.useCase.listStudents(params.FacilitatorId)
 
 	response := api.StudentsResponse{
 		Students:   make([]api.Student, len(students)),

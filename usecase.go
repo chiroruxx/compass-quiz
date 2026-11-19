@@ -1,9 +1,9 @@
 package main
 
-type usecase struct{}
+type useCase struct{}
 
 // listStudents returns the assignment example until the MySQL lookup is implemented.
-func (usecase) listStudents(_ int) ([]student, int) {
+func (useCase) listStudents(_ int) ([]student, int) {
 	students := []student{
 		{
 			id:   1,
