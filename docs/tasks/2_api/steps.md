@@ -11,7 +11,7 @@
 - `compose.yaml` に開発用の Gin サーバーを追加し、既存の MySQL と一緒に起動する。開発サーバーは HTTP で起動し、ソースをマウントして Air で監視する。
 - 起動確認用の `GET /healthz` を OpenAPI で定義し、`oapi-codegen` で Gin 用のコードを `api/` に生成する。
 - `GET /healthz` のユニットテストと `httptest` を使う HTTP テストを整える。同じ MySQL コンテナに、後続の HTTP テストで使うテスト用 DB を作成する。
-- リモートリポジトリを用意し、CI で `go test`、`golangci-lint`、`actionlint` を実行する。golangci-lint では全リンターを有効にし、Go コードのフォーマットも確認する。
+- リモートリポジトリを用意し、CI で `go test`、`golangci-lint`、`actionlint` を実行する。golangci-lint では、日本語のデータを扱うため `gosmopolitan` を除く全リンターを有効にし、Go コードのフォーマットも確認する。
 - **完了条件** `docker compose up` で開発環境が起動し、Go ファイルの変更で API が再ビルド・再起動する。両方のテストをローカルで実行でき、CI の3つのチェックが通る。
 
 ## 3. API 仕様とルーティング

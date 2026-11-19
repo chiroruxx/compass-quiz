@@ -74,7 +74,6 @@ func TestGetStudentsHTTP(t *testing.T) {
 func assertStudentsJSON(t *testing.T, response *httptest.ResponseRecorder) {
 	t.Helper()
 
-	//nolint:gosmopolitan // Use the names from the assignment's response example.
 	const wantBody = `{
 		"students": [{
 			"id": 1,
