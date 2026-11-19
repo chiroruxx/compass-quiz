@@ -6,6 +6,7 @@
 - [課題2の実装ステップ](docs/tasks/2_api/steps.md)には、実装順序とステップごとの完了条件がある。
 - [README](README.md)と[アーキテクチャ設計](ARCHITECTURE.md)には、API の実装方針と開発・実行環境の設計がある。
 - [課題1の要件](docs/tasks/1_db/requirements.md)と[DB 設計](docs/design/db.md)には、API が利用する既存の MySQL の要件と構造がある。
+- 課題1と課題2の `requirements.md` は課題原文の引用として扱い、原文を保持する。
 
 ## 作業の進め方
 
@@ -15,7 +16,11 @@
 
 ## レビュー・PR・CI
 
-1. 各ステップの完了条件を確認したら、コード変更には [実装ステップのレビュースキル `$review-step`](.agents/skills/review-step/SKILL.md)、Markdown の変更には [ドキュメントのレビュースキル `$review-markdown`](.agents/skills/review-markdown/SKILL.md) を使う。スキルの指摘のうち修正できるものは修正し、人間の判断が必要なものは報告する。すべての変更について人間のレビューを受け、必要なレビューを通過したことを確認する。
+1. 各ステップの完了条件を確認したら、スキルを使って変更をレビューする。
+   - コード変更には [実装ステップのレビュースキル `$review-step`](.agents/skills/review-step/SKILL.md) を使う。
+   - Markdown の変更には [ドキュメントのレビュースキル `$review-markdown`](.agents/skills/review-markdown/SKILL.md) を使う。
+   - 修正できる指摘には対応し、人間の判断が必要な指摘は報告する。
+   - すべての変更について人間のレビューを受け、必要なレビューを通過したことを確認する。
 2. レビュー通過後に PR を作成し、CI を実行して結果を確認する。PR は人間が差分を追いやすい規模にする。複数の PR が必要な場合は、先行 PR のブランチを後続 PR のベースにして作成する。[Stacked Pull Requests](https://docs.github.com/en/pull-requests/get-started/about-stacked-prs)
 
 ## マージ後の改善
