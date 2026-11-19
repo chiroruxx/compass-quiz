@@ -13,14 +13,14 @@ import (
 
 // Classroom defines model for Classroom.
 type Classroom struct {
-	Id   int    `json:"id"`
+	Id   uint64 `json:"id"`
 	Name string `json:"name"`
 }
 
 // Student defines model for Student.
 type Student struct {
 	Classroom Classroom `json:"classroom"`
-	Id        int       `json:"id"`
+	Id        uint64    `json:"id"`
 	LoginId   string    `json:"loginId"`
 	Name      string    `json:"name"`
 }

@@ -1,13 +1,13 @@
 package main
 
 type student struct {
-	id      int
+	id      uint64
 	name    string
 	account studentAccount
 	class   class
 }
 
-func newStudent(id int, name string, account studentAccount, class class) student {
+func newStudent(id uint64, name string, account studentAccount, class class) student {
 	return student{id: id, name: name, account: account, class: class}
 }
 
@@ -20,10 +20,10 @@ func newStudentAccount(loginID string) studentAccount {
 }
 
 type class struct {
-	id   int
+	id   uint64
 	name string
 }
 
-func newClass(id int, name string) class {
+func newClass(id uint64, name string) class {
 	return class{id: id, name: name}
 }

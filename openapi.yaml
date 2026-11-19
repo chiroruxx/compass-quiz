@@ -41,6 +41,8 @@ components:
       properties:
         id:
           type: integer
+          minimum: 1
+          x-go-type: uint64
         name:
           type: string
         loginId:
@@ -53,5 +55,7 @@ components:
       properties:
         id:
           type: integer
+          minimum: 1
+          x-go-type: uint64
         name:
           type: string
