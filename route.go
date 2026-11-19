@@ -19,7 +19,7 @@ func newRouter() *gin.Engine {
 	options.ErrorHandler = func(ctx *gin.Context, err error, _ int) {
 		_ = ctx.Error(errors.Join(errValidation, err))
 	}
-	api.RegisterHandlersWithOptions(router, handler{useCase: useCase{}}, options)
+	api.RegisterHandlersWithOptions(router, newHandler(newUseCase()), options)
 
 	return router
 }

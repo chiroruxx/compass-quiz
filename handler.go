@@ -13,6 +13,10 @@ type handler struct {
 	useCase useCase
 }
 
+func newHandler(useCase useCase) handler {
+	return handler{useCase: useCase}
+}
+
 func (h handler) GetStudents(ctx *gin.Context, params api.GetStudentsParams) {
 	if params.FacilitatorId < 1 {
 		_ = ctx.Error(fmt.Errorf("%w: facilitator ID must be at least 1", errValidation))
