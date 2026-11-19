@@ -1,16 +1,13 @@
 //go:build integration
 
-package main_test
+package main
 
 import (
 	"database/sql"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
-
-	api "compass-quiz"
 
 	_ "github.com/go-sql-driver/mysql" // Register the MySQL database/sql driver.
 )
@@ -19,7 +16,7 @@ func TestIntegrationEnvironment(t *testing.T) {
 	t.Parallel()
 	checkTestDatabase(t)
 
-	server := httptest.NewServer(api.NewRouter())
+	server := httptest.NewServer(newRouter())
 	t.Cleanup(server.Close)
 
 	request, err := http.NewRequestWithContext(t.Context(), http.MethodGet, server.URL+healthPath, nil)
@@ -50,12 +47,9 @@ func TestIntegrationEnvironment(t *testing.T) {
 func checkTestDatabase(t *testing.T) {
 	t.Helper()
 
-	dsn := os.Getenv("TEST_MYSQL_DSN")
-	if dsn == "" {
-		t.Fatal("TEST_MYSQL_DSN must be set to the connection string for compass_quiz_test")
-	}
+	const testDSN = "compass:compass_local@tcp(mysql:3306)/compass_quiz_test"
 
-	database, err := sql.Open("mysql", dsn)
+	database, err := sql.Open("mysql", testDSN)
 	if err != nil {
 		t.Fatalf("open test database: %v", err)
 	}
@@ -66,17 +60,6 @@ func checkTestDatabase(t *testing.T) {
 			t.Errorf("close test database: %v", err)
 		}
 	})
-
-	var databaseName string
-
-	err = database.QueryRowContext(t.Context(), "SELECT DATABASE()").Scan(&databaseName)
-	if err != nil {
-		t.Fatalf("identify test database: %v", err)
-	}
-
-	if databaseName != "compass_quiz_test" {
-		t.Fatalf("connected to %q, want compass_quiz_test", databaseName)
-	}
 
 	var seeded bool
 

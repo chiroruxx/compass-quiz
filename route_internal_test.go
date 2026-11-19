@@ -1,11 +1,9 @@
-package main_test
+package main
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	api "compass-quiz"
 )
 
 const (
@@ -14,12 +12,13 @@ const (
 	healthContentType = "text/plain; charset=utf-8"
 )
 
-func TestHealthz(t *testing.T) {
+// TestHealthRoute checks the generated Gin route and its response without a database.
+func TestHealthRoute(t *testing.T) {
 	t.Parallel()
 
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, healthPath, nil)
 	response := httptest.NewRecorder()
-	api.NewRouter().ServeHTTP(response, request)
+	newRouter().ServeHTTP(response, request)
 
 	assertHealthz(t, response.Code, response.Header().Get("Content-Type"), response.Body.String())
 }

@@ -4,20 +4,13 @@ run:
     - integration
 linters:
   default: all
-  exclusions:
-    rules:
-      # oapi-codegen already emits the package comment in api.gen.go.
-      - path: '^[^/]+\.go$'
-        linters:
-          - revive
-        text: 'package-comments: should have a package comment'
   settings:
     depguard:
       rules:
         main:
           allow:
             - $gostd
-            - compass-quiz$
+            - compass-quiz/api$
             - github.com/gin-gonic/gin$
             - github.com/go-sql-driver/mysql$
 formatters:

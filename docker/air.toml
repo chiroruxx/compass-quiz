@@ -6,3 +6,5 @@ entrypoint = ["./.air/compass-quiz"]
 include_ext = ["go"]
 exclude_dir = [".air", ".git"]
 poll = true
+send_interrupt = true
+kill_delay = "6s"

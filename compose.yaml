@@ -1,25 +1,2 @@
-services:
-  api:
-    build: .
-    ports:
-      - "48080:8080"
-    volumes:
-      - .:/app
-
-  mysql:
-    image: mysql:8.4
-    environment:
-      TZ: Asia/Tokyo
-      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
-      MYSQL_DATABASE: compass_quiz
-      MYSQL_USER: compass
-      MYSQL_PASSWORD: compass_local
-    ports:
-      - "43306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./mysql/conf.d/server.cnf:/etc/mysql/conf.d/compass-quiz.cnf:ro
-      - ./mysql/init:/docker-entrypoint-initdb.d:ro
-
-volumes:
-  mysql_data:
+include:
+  - docker/compose.yaml
