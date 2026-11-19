@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-//go:generate go tool oapi-codegen -config oapi-codegen.yaml openapi.yaml
+//go:generate go tool -modfile=tools/oapi-codegen/go.mod oapi-codegen -config oapi-codegen.yaml openapi.yaml
 
 const (
 	readHeaderTimeout = 5 * time.Second

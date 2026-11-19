@@ -37,9 +37,9 @@
 - HTTP テスト
   - `httptest` で API の振る舞いを確認する。DB を使う API のテストでは、テスト用 MySQL を用意し、CI でも実行する。
 
-### CI ツール
+### 開発ツール
 
-- golangci-lint と actionlint のバージョンは、`tools/` 配下の個別の `go.mod` で固定する。両ツールを同じモジュールに入れると、必要とする `go.yaml.in/yaml/v4` の API が異なるため、選択されたバージョンで actionlint をビルドできない。
+- ツールの依存ライブラリ間の競合でビルドできなくなる問題を回避するため、oapi-codegen、golangci-lint、actionlint のバージョンは `tools/` 配下の個別の `go.mod` で固定する。
 
 ## TLS 関連
 
