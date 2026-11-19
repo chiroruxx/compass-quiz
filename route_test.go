@@ -1,9 +1,8 @@
-//go:build integration
-
 package main
 
 import (
 	"database/sql"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,14 +11,19 @@ import (
 	_ "github.com/go-sql-driver/mysql" // Register the MySQL database/sql driver.
 )
 
-func TestIntegrationEnvironment(t *testing.T) {
+func TestHealthRoute(t *testing.T) {
 	t.Parallel()
-	checkTestDatabase(t)
+
+	if testing.Short() {
+		t.Skip("requires the Compose MySQL test database")
+	}
+
+	insertTestFixture(t)
 
 	server := httptest.NewServer(newRouter())
 	t.Cleanup(server.Close)
 
-	request, err := http.NewRequestWithContext(t.Context(), http.MethodGet, server.URL+healthPath, nil)
+	request, err := http.NewRequestWithContext(t.Context(), http.MethodGet, server.URL+"/healthz", nil)
 	if err != nil {
 		t.Fatalf("create health request: %v", err)
 	}
@@ -44,7 +48,7 @@ func TestIntegrationEnvironment(t *testing.T) {
 	assertHealthz(t, response.StatusCode, response.Header.Get("Content-Type"), string(body))
 }
 
-func checkTestDatabase(t *testing.T) {
+func insertTestFixture(t *testing.T) {
 	t.Helper()
 
 	const testDSN = "compass:compass_local@tcp(mysql:3306)/compass_quiz_test"
@@ -61,14 +65,21 @@ func checkTestDatabase(t *testing.T) {
 		}
 	})
 
-	var seeded bool
-
-	err = database.QueryRowContext(t.Context(), "SELECT EXISTS (SELECT 1 FROM students)").Scan(&seeded)
+	transaction, err := database.BeginTx(t.Context(), nil)
 	if err != nil {
-		t.Fatalf("read student seed data: %v", err)
+		t.Fatalf("start fixture transaction: %v", err)
 	}
 
-	if !seeded {
-		t.Fatal("the test database contains no student seed data")
+	t.Cleanup(func() {
+		// database/sql may already have rolled back when the test context ended.
+		err := transaction.Rollback()
+		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+			t.Errorf("roll back test fixture: %v", err)
+		}
+	})
+
+	_, err = transaction.ExecContext(t.Context(), "INSERT INTO classes (id, name) VALUES (9000, 'Test class')")
+	if err != nil {
+		t.Fatalf("insert test fixture: %v", err)
 	}
 }

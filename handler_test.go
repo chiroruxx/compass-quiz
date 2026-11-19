@@ -4,21 +4,21 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
-	healthPath        = "/healthz"
 	healthBody        = "ok\n"
 	healthContentType = "text/plain; charset=utf-8"
 )
 
-// TestHealthRoute checks the generated Gin route and its response without a database.
-func TestHealthRoute(t *testing.T) {
+func TestHealthHandler(t *testing.T) {
 	t.Parallel()
 
-	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, healthPath, nil)
 	response := httptest.NewRecorder()
-	newRouter().ServeHTTP(response, request)
+	ctx, _ := gin.CreateTestContext(response)
+	healthHandler{}.GetHealthz(ctx)
 
 	assertHealthz(t, response.Code, response.Header().Get("Content-Type"), response.Body.String())
 }

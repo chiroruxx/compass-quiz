@@ -25,7 +25,7 @@
 ### コード生成
 
 - API スキーマは OpenAPI で定義し、`oapi-codegen` で Gin 用のルーティングと API の型を `api/` に生成する。
-- Step 4 で、MySQL のスキーマと SQL クエリから `sqlc` でデータアクセスコードを `db/` に生成する。
+- MySQL のスキーマと SQL クエリから `sqlc` でデータアクセスコードを `db/` に生成する。
 - テスト用モックは gomock で生成する。
 
 ### テスト

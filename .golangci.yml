@@ -1,10 +1,9 @@
 version: "2"
-run:
-  build-tags:
-    - integration
 linters:
   default: all
   settings:
+    testpackage:
+      skip-regexp: '(export|internal|handler|route)_test\.go$'
     depguard:
       rules:
         main:
