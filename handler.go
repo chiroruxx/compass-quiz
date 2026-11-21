@@ -10,22 +10,21 @@ import (
 )
 
 type handler struct {
-	useCase useCase
+	useCase studentUseCase
 }
 
-func newHandler(useCase useCase) handler {
+func newHandler(useCase studentUseCase) handler {
 	return handler{useCase: useCase}
 }
 
 func (h handler) GetStudents(ctx *gin.Context, params api.GetStudentsParams) {
-	if params.FacilitatorId < 1 {
-		_ = ctx.Error(fmt.Errorf("%w: facilitator ID must be at least 1", errValidation))
+	students, totalCount, err := h.useCase.listStudents(ctx.Request.Context(), params.FacilitatorId)
+	if err != nil {
+		_ = ctx.Error(fmt.Errorf("get students: %w", err))
 		ctx.Abort()
 
 		return
 	}
-
-	students, totalCount := h.useCase.listStudents(params.FacilitatorId)
 
 	response := api.StudentsResponse{
 		Students:   make([]api.Student, len(students)),

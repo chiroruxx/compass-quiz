@@ -9,7 +9,7 @@ import (
 	"compass-quiz/api"
 )
 
-func newRouter() *gin.Engine {
+func newRouter(useCase studentUseCase) *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery(), errorMiddleware)
 
@@ -20,7 +20,7 @@ func newRouter() *gin.Engine {
 	options.ErrorHandler = func(ctx *gin.Context, err error, _ int) {
 		_ = ctx.Error(errors.Join(errValidation, err))
 	}
-	api.RegisterHandlersWithOptions(router, newHandler(newUseCase()), options)
+	api.RegisterHandlersWithOptions(router, newHandler(useCase), options)
 
 	return router
 }
@@ -34,8 +34,12 @@ func errorMiddleware(ctx *gin.Context) {
 	}
 
 	status := http.StatusInternalServerError
-	if errors.Is(lastError.Err, errValidation) {
+
+	switch {
+	case errors.Is(lastError.Err, errValidation):
 		status = http.StatusBadRequest
+	case errors.Is(lastError.Err, errNotFound):
+		status = http.StatusNotFound
 	}
 
 	// Write only the status so error responses have no body.
