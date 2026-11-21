@@ -12,7 +12,7 @@ docker compose up -d
 
 ### テスト
 
-API コンテナでユニットテストと HTTP テストをまとめて実行する。
+API コンテナでユニットテストと HTTP テストを実行する。
 
 ```sh
 docker compose exec api go test -count=1 ./...
@@ -20,7 +20,7 @@ docker compose exec api go test -count=1 ./...
 
 ### コード生成と CI
 
-`openapi.yaml` を変更したら、Go の型と Gin のルーティングを再生成する。
+OpenAPI、MySQL のスキーマ・クエリ、またはリポジトリのインターフェースを変更したら、Go コードとテスト用モックを再生成する。
 
 ```sh
 docker compose exec api go generate ./...

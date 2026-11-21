@@ -1,0 +1,9 @@
+version: "2"
+sql:
+  - engine: mysql
+    schema: docker/mysql/init/01-schema.sql
+    queries: db/queries.sql
+    gen:
+      go:
+        package: db
+        out: db

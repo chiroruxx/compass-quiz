@@ -8,6 +8,7 @@ require (
 	github.com/go-sql-driver/mysql v1.10.2
 	github.com/go-testfixtures/testfixtures/v3 v3.19.0
 	github.com/oapi-codegen/runtime v1.9.0
+	go.uber.org/mock v0.6.0
 )
 
 require (
