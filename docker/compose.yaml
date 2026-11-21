@@ -1,6 +1,9 @@
 services:
   api:
     build: .
+    depends_on:
+      mysql:
+        condition: service_healthy
     ports:
       - "48080:8080"
     volumes:
@@ -14,6 +17,11 @@ services:
       MYSQL_DATABASE: compass_quiz
       MYSQL_USER: compass
       MYSQL_PASSWORD: compass_local
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql --protocol=TCP --host=127.0.0.1 --user=\"$$MYSQL_USER\" --database=\"$$MYSQL_DATABASE\" --execute='SELECT 1'"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
     ports:
       - "43306:3306"
     volumes:

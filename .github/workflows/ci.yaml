@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   checks:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
@@ -23,4 +23,4 @@ jobs:
       - name: Run actionlint
         run: go tool -modfile=tools/actionlint/go.mod actionlint
       - name: Run tests
-        run: go test ./...
+        run: docker compose run --rm -T api go test -count=1 ./...
