@@ -31,6 +31,18 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	pool, err := openMySQL(mysqlConfigFromEnv())
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		err := pool.Close()
+		if err != nil {
+			slog.Error("close MySQL connection pool", "error", err)
+		}
+	}()
+
 	server := new(http.Server)
 	server.Addr = ":8080"
 	server.Handler = newRouter()
@@ -50,7 +62,7 @@ func run() error {
 	shutdownContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownTimeout)
 	defer cancel()
 
-	err := server.Shutdown(shutdownContext)
+	err = server.Shutdown(shutdownContext)
 	if err != nil {
 		return fmt.Errorf("shut down HTTP server: %w", err)
 	}

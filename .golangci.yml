@@ -15,6 +15,7 @@ linters:
             - $gostd
             - compass-quiz/api$
             - github.com/gin-gonic/gin$
+            - github.com/go-sql-driver/mysql$
 formatters:
   enable:
     - gofmt
