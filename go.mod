@@ -3,8 +3,10 @@ module compass-quiz
 go 1.27
 
 require (
+	github.com/DATA-DOG/go-txdb v0.2.1
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-sql-driver/mysql v1.10.2
+	github.com/go-testfixtures/testfixtures/v3 v3.19.0
 	github.com/oapi-codegen/runtime v1.9.0
 )
 
@@ -39,6 +41,7 @@ require (
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect

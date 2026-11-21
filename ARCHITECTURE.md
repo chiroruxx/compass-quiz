@@ -40,7 +40,7 @@
 - ユニットテスト
   - DB なしで実行する。
 - HTTP テスト
-  - `httptest` で API の振る舞いを確認する。DB を使う API のテストでは、テスト用 MySQL を用意し、CI でも実行する。
+  - `httptest` で API の振る舞いを確認する。DB を使う HTTP テストは、同じ MySQL インスタンス内のテスト用 DB `compass_quiz_test` に接続する。必要なデータはケースごとに go-testfixtures で YAML から投入し、go-txdb がケース終了時にロールバックする。CI でも同じ構成で実行する。
 
 ## TLS 関連
 
