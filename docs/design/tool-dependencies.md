@@ -1,6 +1,6 @@
 # 開発ツールの依存関係
 
-oapi-codegen、golangci-lint、actionlint は、それぞれ `tools/` 配下の専用 Go モジュールでバージョンを固定する。
+各種ツールは、それぞれ `tools/` 配下の専用 Go モジュールでバージョンを固定する。
 
 ## 背景
 

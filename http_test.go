@@ -1,88 +1,87 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json/jsontext"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
+const wantAssignedStudentsJSON = `{
+	"students": [
+		{"id": 1, "name": "佐藤", "loginId": "foo123", "classroom": {"id": 1, "name": "クラスA"}},
+		{"id": 4, "name": "加藤", "loginId": "hoge0000", "classroom": {"id": 1, "name": "クラスA"}},
+		{"id": 7, "name": "小田原", "loginId": "fizz9999", "classroom": {"id": 1, "name": "クラスA"}},
+		{"id": 10, "name": "Williams", "loginId": "xxx:42", "classroom": {"id": 1, "name": "クラスA"}}
+	],
+	"totalCount": 4
+}`
+
+//nolint:paralleltest // Seeded cases modify the same tables and must run sequentially.
 func TestGetStudentsHTTP(t *testing.T) {
-	t.Parallel()
+	assertBadRequest := assertEmptyHTTPResponse(http.StatusBadRequest)
 
 	cases := []struct {
-		name       string
-		path       string
-		wantStatus int
-		assertBody func(*testing.T, *httptest.ResponseRecorder)
+		name    string
+		path    string
+		arrange func(*testing.T, *sql.DB)
+		assert  func(*testing.T, *httptest.ResponseRecorder)
 	}{
 		{
-			name: "valid", path: "/students?facilitator_id=1",
-			wantStatus: http.StatusOK, assertBody: assertStudentsJSON,
+			name: "assigned students", path: "/students?facilitator_id=1",
+			arrange: loadStudentFixtures,
+			assert: func(t *testing.T, response *httptest.ResponseRecorder) {
+				t.Helper()
+
+				assertHTTPStatus(t, response, http.StatusOK)
+				assertStudentsJSON(t, response, wantAssignedStudentsJSON)
+			},
 		},
 		{
-			name: "unknown", path: "/students?facilitator_id=999",
-			wantStatus: http.StatusOK, assertBody: assertStudentsJSON,
+			name: "unknown facilitator", path: "/students?facilitator_id=999",
+			arrange: loadStudentFixtures, assert: assertEmptyHTTPResponse(http.StatusNotFound),
 		},
 		{
-			name: "missing", path: "/students",
-			wantStatus: http.StatusBadRequest, assertBody: assertEmptyBody,
+			name: "internal server error", path: "/students?facilitator_id=1",
+			arrange: closeHTTPTestDB, assert: assertEmptyHTTPResponse(http.StatusInternalServerError),
 		},
-		{
-			name: "empty", path: "/students?facilitator_id=",
-			wantStatus: http.StatusBadRequest, assertBody: assertEmptyBody,
-		},
-		{
-			name: "text", path: "/students?facilitator_id=abc",
-			wantStatus: http.StatusBadRequest, assertBody: assertEmptyBody,
-		},
-		{
-			name: "fraction", path: "/students?facilitator_id=1.5",
-			wantStatus: http.StatusBadRequest, assertBody: assertEmptyBody,
-		},
-		{
-			name: "zero", path: "/students?facilitator_id=0",
-			wantStatus: http.StatusBadRequest, assertBody: assertEmptyBody,
-		},
-		{
-			name: "negative", path: "/students?facilitator_id=-1",
-			wantStatus: http.StatusBadRequest, assertBody: assertEmptyBody,
-		},
+		{name: "missing", path: "/students", arrange: nil, assert: assertBadRequest},
+		{name: "empty", path: "/students?facilitator_id=", arrange: nil, assert: assertBadRequest},
+		{name: "text", path: "/students?facilitator_id=abc", arrange: nil, assert: assertBadRequest},
+		{name: "fraction", path: "/students?facilitator_id=1.5", arrange: nil, assert: assertBadRequest},
+		{name: "zero", path: "/students?facilitator_id=0", arrange: nil, assert: assertBadRequest},
+		{name: "negative", path: "/students?facilitator_id=-1", arrange: nil, assert: assertBadRequest},
 	}
+
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
+			pool := openHTTPTestDB(t)
+			if testCase.arrange != nil {
+				testCase.arrange(t, pool)
+			}
 
-			// Arrange
-			router := newRouter()
+			router := newRouter(newStudentUseCase(newStudentRepository(pool)))
 			request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, testCase.path, nil)
 			response := httptest.NewRecorder()
 
-			// Act
 			router.ServeHTTP(response, request)
 
-			// Assert
-			if response.Code != testCase.wantStatus {
-				t.Fatalf("status = %d, want %d", response.Code, testCase.wantStatus)
-			}
-
-			testCase.assertBody(t, response)
+			testCase.assert(t, response)
 		})
 	}
 }
 
-func assertStudentsJSON(t *testing.T, response *httptest.ResponseRecorder) {
+func assertHTTPStatus(t *testing.T, response *httptest.ResponseRecorder, wantStatus int) {
 	t.Helper()
 
-	const wantBody = `{
-		"students": [{
-			"id": 1,
-			"name": "佐藤",
-			"loginId": "foo123",
-			"classroom": {"id": 1, "name": "クラスA"}
-		}],
-		"totalCount": 1
-	}`
+	if response.Code != wantStatus {
+		t.Fatalf("status = %d, want %d", response.Code, wantStatus)
+	}
+}
+
+func assertStudentsJSON(t *testing.T, response *httptest.ResponseRecorder, wantBody string) {
+	t.Helper()
 
 	want := jsontext.Value(wantBody)
 
@@ -110,10 +109,14 @@ func assertStudentsJSON(t *testing.T, response *httptest.ResponseRecorder) {
 	}
 }
 
-func assertEmptyBody(t *testing.T, response *httptest.ResponseRecorder) {
-	t.Helper()
+func assertEmptyHTTPResponse(wantStatus int) func(*testing.T, *httptest.ResponseRecorder) {
+	return func(t *testing.T, response *httptest.ResponseRecorder) {
+		t.Helper()
 
-	if response.Body.Len() != 0 {
-		t.Errorf("body = %q, want empty", response.Body.String())
+		assertHTTPStatus(t, response, wantStatus)
+
+		if response.Body.Len() != 0 {
+			t.Errorf("body = %q, want empty", response.Body.String())
+		}
 	}
 }

@@ -13,6 +13,7 @@ import (
 )
 
 //go:generate go tool -modfile=tools/oapi-codegen/go.mod oapi-codegen -config oapi-codegen.yaml openapi.yaml
+//go:generate go tool -modfile=tools/sqlc/go.mod sqlc generate
 
 const (
 	readHeaderTimeout = 5 * time.Second
@@ -43,9 +44,13 @@ func run() error {
 		}
 	}()
 
+	repository := newStudentRepository(pool)
+	useCase := newStudentUseCase(repository)
+	router := newRouter(useCase)
+
 	server := new(http.Server)
 	server.Addr = ":8080"
-	server.Handler = newRouter()
+	server.Handler = router
 	server.ReadHeaderTimeout = readHeaderTimeout
 
 	serverError := make(chan error, 1)

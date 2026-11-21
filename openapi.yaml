@@ -23,6 +23,10 @@ paths:
                 $ref: '#/components/schemas/StudentsResponse'
         '400':
           description: Missing or invalid facilitator ID
+        '404':
+          description: No students found
+        '500':
+          description: Internal server error
 components:
   schemas:
     StudentsResponse:

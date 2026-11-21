@@ -14,10 +14,12 @@ linters:
           allow:
             - $gostd
             - compass-quiz/api$
+            - compass-quiz/db$
             - github.com/DATA-DOG/go-txdb$
             - github.com/gin-gonic/gin$
             - github.com/go-testfixtures/testfixtures/v3$
             - github.com/go-sql-driver/mysql$
+            - go.uber.org/mock/gomock$
 formatters:
   enable:
     - gofmt
