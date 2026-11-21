@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json/jsontext"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,6 +19,11 @@ const wantAssignedStudentsJSON = `{
 
 //nolint:paralleltest // Seeded cases modify the same tables and must run sequentially.
 func TestGetStudentsHTTP(t *testing.T) {
+	loadStudentFixtures := func(t *testing.T, pool *sql.DB) {
+		t.Helper()
+
+		loadHTTPFixtures(t, pool, "testdata/GetStudents.yml")
+	}
 	assertBadRequest := assertEmptyHTTPResponse(http.StatusBadRequest)
 
 	cases := []struct {
@@ -35,7 +39,7 @@ func TestGetStudentsHTTP(t *testing.T) {
 				t.Helper()
 
 				assertHTTPStatus(t, response, http.StatusOK)
-				assertStudentsJSON(t, response, wantAssignedStudentsJSON)
+				assertJSONResponse(t, response, wantAssignedStudentsJSON)
 			},
 		},
 		{
@@ -69,54 +73,5 @@ func TestGetStudentsHTTP(t *testing.T) {
 
 			testCase.assert(t, response)
 		})
-	}
-}
-
-func assertHTTPStatus(t *testing.T, response *httptest.ResponseRecorder, wantStatus int) {
-	t.Helper()
-
-	if response.Code != wantStatus {
-		t.Fatalf("status = %d, want %d", response.Code, wantStatus)
-	}
-}
-
-func assertStudentsJSON(t *testing.T, response *httptest.ResponseRecorder, wantBody string) {
-	t.Helper()
-
-	want := jsontext.Value(wantBody)
-
-	err := want.Canonicalize()
-	if err != nil {
-		t.Fatalf("canonicalize expected JSON: %v", err)
-	}
-
-	const wantContentType = "application/json; charset=utf-8"
-
-	if contentType := response.Header().Get("Content-Type"); contentType != wantContentType {
-		t.Errorf("Content-Type = %q, want %q", contentType, wantContentType)
-	}
-
-	body := response.Body.String()
-	got := jsontext.Value(body)
-
-	err = got.Canonicalize()
-	if err != nil {
-		t.Fatalf("canonicalize response JSON: %v", err)
-	}
-
-	if got.String() != want.String() {
-		t.Errorf("response = %s, want %s", body, wantBody)
-	}
-}
-
-func assertEmptyHTTPResponse(wantStatus int) func(*testing.T, *httptest.ResponseRecorder) {
-	return func(t *testing.T, response *httptest.ResponseRecorder) {
-		t.Helper()
-
-		assertHTTPStatus(t, response, wantStatus)
-
-		if response.Body.Len() != 0 {
-			t.Errorf("body = %q, want empty", response.Body.String())
-		}
 	}
 }
