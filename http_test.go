@@ -2,143 +2,130 @@ package main
 
 import (
 	"database/sql"
-	_ "embed"
 	"encoding/json/jsontext"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/DATA-DOG/go-txdb"
+	"github.com/go-testfixtures/testfixtures/v3"
 )
 
-//go:embed testdata/students.sql
-var studentFixtures string
+const wantAssignedStudentsJSON = `{
+	"students": [
+		{"id": 1, "name": "佐藤", "loginId": "foo123", "classroom": {"id": 1, "name": "クラスA"}},
+		{"id": 4, "name": "加藤", "loginId": "hoge0000", "classroom": {"id": 1, "name": "クラスA"}},
+		{"id": 7, "name": "小田原", "loginId": "fizz9999", "classroom": {"id": 1, "name": "クラスA"}},
+		{"id": 10, "name": "Williams", "loginId": "xxx:42", "classroom": {"id": 1, "name": "クラスA"}}
+	],
+	"totalCount": 4
+}`
 
-//nolint:paralleltest // Seeded cases insert the same rows and must run sequentially.
+//nolint:paralleltest // Seeded cases modify the same tables and must run sequentially.
 func TestGetStudentsHTTP(t *testing.T) {
-	pool := openHTTPTestPool(t)
-
-	t.Run("assigned students", func(t *testing.T) {
-		const want = `{
-			"students": [
-				{"id": 1, "name": "佐藤", "loginId": "foo123", "classroom": {"id": 1, "name": "クラスA"}},
-				{"id": 4, "name": "加藤", "loginId": "hoge0000", "classroom": {"id": 1, "name": "クラスA"}},
-				{"id": 7, "name": "小田原", "loginId": "fizz9999", "classroom": {"id": 1, "name": "クラスA"}},
-				{"id": 10, "name": "Williams", "loginId": "xxx:42", "classroom": {"id": 1, "name": "クラスA"}}
-			],
-			"totalCount": 4
-		}`
-
-		response := getStudents(t, newSeededHTTPTestUseCase(t, pool), "/students?facilitator_id=1", http.StatusOK)
-		assertStudentsJSON(t, response, want)
-	})
-
-	t.Run("unknown facilitator", func(t *testing.T) {
-		response := getStudents(t, newSeededHTTPTestUseCase(t, pool), "/students?facilitator_id=999", http.StatusNotFound)
-		assertEmptyBody(t, response)
-	})
-
-	t.Run("internal server error", func(t *testing.T) {
-		transaction, err := pool.BeginTx(t.Context(), nil)
-		if err != nil {
-			t.Fatalf("begin test transaction: %v", err)
-		}
-
-		// A closed transaction makes the repository query fail.
-		err = transaction.Rollback()
-		if err != nil {
-			t.Fatalf("close test transaction: %v", err)
-		}
-
-		useCase := newStudentUseCase(newStudentRepository(transaction))
-		response := getStudents(t, useCase, "/students?facilitator_id=1", http.StatusInternalServerError)
-		assertEmptyBody(t, response)
-	})
-}
-
-func TestGetStudentsHTTPInvalidFacilitatorID(t *testing.T) {
-	t.Parallel()
-
-	pool := openHTTPTestPool(t)
+	assertBadRequest := assertEmptyHTTPResponse(http.StatusBadRequest)
 
 	cases := []struct {
-		name string
-		path string
+		name    string
+		path    string
+		arrange func(*testing.T, *sql.DB)
+		assert  func(*testing.T, *httptest.ResponseRecorder)
 	}{
-		{name: "missing", path: "/students"},
-		{name: "empty", path: "/students?facilitator_id="},
-		{name: "text", path: "/students?facilitator_id=abc"},
-		{name: "fraction", path: "/students?facilitator_id=1.5"},
-		{name: "zero", path: "/students?facilitator_id=0"},
-		{name: "negative", path: "/students?facilitator_id=-1"},
+		{
+			name: "assigned students", path: "/students?facilitator_id=1",
+			arrange: loadStudentFixtures,
+			assert: func(t *testing.T, response *httptest.ResponseRecorder) {
+				t.Helper()
+
+				assertHTTPStatus(t, response, http.StatusOK)
+				assertStudentsJSON(t, response, wantAssignedStudentsJSON)
+			},
+		},
+		{
+			name: "unknown facilitator", path: "/students?facilitator_id=999",
+			arrange: loadStudentFixtures, assert: assertEmptyHTTPResponse(http.StatusNotFound),
+		},
+		{
+			name: "internal server error", path: "/students?facilitator_id=1",
+			arrange: closeHTTPTestDB, assert: assertEmptyHTTPResponse(http.StatusInternalServerError),
+		},
+		{name: "missing", path: "/students", arrange: nil, assert: assertBadRequest},
+		{name: "empty", path: "/students?facilitator_id=", arrange: nil, assert: assertBadRequest},
+		{name: "text", path: "/students?facilitator_id=abc", arrange: nil, assert: assertBadRequest},
+		{name: "fraction", path: "/students?facilitator_id=1.5", arrange: nil, assert: assertBadRequest},
+		{name: "zero", path: "/students?facilitator_id=0", arrange: nil, assert: assertBadRequest},
+		{name: "negative", path: "/students?facilitator_id=-1", arrange: nil, assert: assertBadRequest},
 	}
+
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
+			pool := openHTTPTestDB(t)
+			if testCase.arrange != nil {
+				testCase.arrange(t, pool)
+			}
 
-			useCase := newStudentUseCase(newStudentRepository(pool))
-			response := getStudents(t, useCase, testCase.path, http.StatusBadRequest)
-			assertEmptyBody(t, response)
+			router := newRouter(newStudentUseCase(newStudentRepository(pool)))
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, testCase.path, nil)
+			response := httptest.NewRecorder()
+
+			router.ServeHTTP(response, request)
+
+			testCase.assert(t, response)
 		})
 	}
 }
 
-func openHTTPTestPool(t *testing.T) *sql.DB {
+func openHTTPTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
 	config := mysqlConfigFromEnv()
 	config.DBName = "compass_quiz_test"
-	config.MultiStatements = true
 
-	pool, err := openMySQL(config)
-	if err != nil {
-		t.Fatalf("open test database: %v", err)
-	}
+	pool := sql.OpenDB(txdb.New("mysql", config.FormatDSN()))
 
 	t.Cleanup(func() {
-		err := pool.Close()
-		if err != nil {
-			t.Errorf("close test database: %v", err)
-		}
+		closeHTTPTestDB(t, pool)
 	})
 
 	return pool
 }
 
-func newSeededHTTPTestUseCase(t *testing.T, pool *sql.DB) studentUseCase {
+func closeHTTPTestDB(t *testing.T, pool *sql.DB) {
 	t.Helper()
 
-	transaction, err := pool.BeginTx(t.Context(), nil)
+	err := pool.Close()
 	if err != nil {
-		t.Fatalf("begin test transaction: %v", err)
+		t.Errorf("close test database: %v", err)
 	}
-
-	t.Cleanup(func() {
-		err := transaction.Rollback()
-		if err != nil && !errors.Is(err, sql.ErrTxDone) {
-			t.Errorf("roll back test transaction: %v", err)
-		}
-	})
-
-	_, err = transaction.ExecContext(t.Context(), studentFixtures)
-	if err != nil {
-		t.Fatalf("seed test database: %v", err)
-	}
-
-	return newStudentUseCase(newStudentRepository(transaction))
 }
 
-func getStudents(t *testing.T, useCase studentUseCase, path string, wantStatus int) *httptest.ResponseRecorder {
+func loadStudentFixtures(t *testing.T, pool *sql.DB) {
 	t.Helper()
 
-	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, path, nil)
-	response := httptest.NewRecorder()
-	newRouter(useCase).ServeHTTP(response, request)
+	fixtures, err := testfixtures.New(
+		testfixtures.Database(pool),
+		testfixtures.Dialect("mysql"),
+		testfixtures.FilesMultiTables("testdata/GetStudents.yml"),
+		// MySQL resets sequences with ALTER TABLE, which implicitly commits the transaction.
+		testfixtures.SkipResetSequences(),
+		testfixtures.SkipTableChecksumComputation(),
+	)
+	if err != nil {
+		t.Fatalf("create fixture loader: %v", err)
+	}
+
+	err = fixtures.Load()
+	if err != nil {
+		t.Fatalf("load student fixtures: %v", err)
+	}
+}
+
+func assertHTTPStatus(t *testing.T, response *httptest.ResponseRecorder, wantStatus int) {
+	t.Helper()
 
 	if response.Code != wantStatus {
 		t.Fatalf("status = %d, want %d", response.Code, wantStatus)
 	}
-
-	return response
 }
 
 func assertStudentsJSON(t *testing.T, response *httptest.ResponseRecorder, wantBody string) {
@@ -170,10 +157,14 @@ func assertStudentsJSON(t *testing.T, response *httptest.ResponseRecorder, wantB
 	}
 }
 
-func assertEmptyBody(t *testing.T, response *httptest.ResponseRecorder) {
-	t.Helper()
+func assertEmptyHTTPResponse(wantStatus int) func(*testing.T, *httptest.ResponseRecorder) {
+	return func(t *testing.T, response *httptest.ResponseRecorder) {
+		t.Helper()
 
-	if response.Body.Len() != 0 {
-		t.Errorf("body = %q, want empty", response.Body.String())
+		assertHTTPStatus(t, response, wantStatus)
+
+		if response.Body.Len() != 0 {
+			t.Errorf("body = %q, want empty", response.Body.String())
+		}
 	}
 }

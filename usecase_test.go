@@ -12,8 +12,6 @@ import (
 func TestStudentUseCaseListStudents(t *testing.T) {
 	t.Parallel()
 
-	const facilitatorID = 1
-
 	classA := newClass(1, "クラスA")
 	students := []studentWithAccount{
 		newStudentWithAccount(newStudent(1, "佐藤", classA), newStudentAccount("foo123")),
@@ -22,17 +20,35 @@ func TestStudentUseCaseListStudents(t *testing.T) {
 	repositoryFailure := context.DeadlineExceeded
 
 	cases := []struct {
-		name            string
-		students        []studentWithAccount
-		repositoryError error
-		wantCount       int
-		wantError       error
+		name    string
+		arrange func(*testing.T) (studentUseCase, int)
+		assert  func(*testing.T, []studentWithAccount, int, error)
 	}{
-		{name: "students found", students: students, repositoryError: nil, wantCount: len(students), wantError: nil},
-		{name: "no students", students: nil, repositoryError: nil, wantCount: 0, wantError: errNotFound},
 		{
-			name: "repository error", students: nil, repositoryError: repositoryFailure,
-			wantCount: 0, wantError: repositoryFailure,
+			name:    "students found",
+			arrange: arrangeStudentLookup(students, nil),
+			assert:  assertListStudentsResult(students, nil),
+		},
+		{
+			name:    "no students",
+			arrange: arrangeStudentLookup(nil, nil),
+			assert:  assertListStudentsResult(nil, errNotFound),
+		},
+		{
+			name:    "repository error",
+			arrange: arrangeStudentLookup(nil, repositoryFailure),
+			assert:  assertListStudentsResult(nil, repositoryFailure),
+		},
+		{
+			name: "invalid facilitator ID",
+			arrange: func(t *testing.T) (studentUseCase, int) {
+				t.Helper()
+
+				repository := NewMockStudentReader(gomock.NewController(t))
+
+				return newStudentUseCase(repository), -1
+			},
+			assert: assertListStudentsResult(nil, errValidation),
 		},
 	}
 
@@ -40,32 +56,40 @@ func TestStudentUseCaseListStudents(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := t.Context()
-			repository := NewMockStudentReader(gomock.NewController(t))
-			repository.EXPECT().
-				listStudentsWithAccounts(ctx, uint64(facilitatorID)).
-				Return(testCase.students, testCase.repositoryError)
+			useCase, facilitatorID := testCase.arrange(t)
 
-			got, count, err := newStudentUseCase(repository).listStudents(ctx, facilitatorID)
-			if !errors.Is(err, testCase.wantError) {
-				t.Fatalf("listStudents error = %v, want %v", err, testCase.wantError)
-			}
+			got, count, err := useCase.listStudents(t.Context(), facilitatorID)
 
-			if count != testCase.wantCount || !slices.Equal(got, testCase.students) {
-				t.Errorf("listStudents = (%v, %d), want (%v, %d)", got, count, testCase.students, testCase.wantCount)
-			}
+			testCase.assert(t, got, count, err)
 		})
 	}
 }
 
-func TestStudentUseCaseRejectsInvalidFacilitatorID(t *testing.T) {
-	t.Parallel()
+func arrangeStudentLookup(students []studentWithAccount, err error) func(*testing.T) (studentUseCase, int) {
+	return func(t *testing.T) (studentUseCase, int) {
+		t.Helper()
 
-	repository := NewMockStudentReader(gomock.NewController(t))
-	useCase := newStudentUseCase(repository)
+		const facilitatorID = 1
 
-	_, _, err := useCase.listStudents(t.Context(), -1)
-	if !errors.Is(err, errValidation) {
-		t.Fatalf("listStudents error = %v, want %v", err, errValidation)
+		repository := NewMockStudentReader(gomock.NewController(t))
+		repository.EXPECT().listStudentsWithAccounts(t.Context(), uint64(facilitatorID)).Return(students, err)
+
+		return newStudentUseCase(repository), facilitatorID
+	}
+}
+
+func assertListStudentsResult(
+	want []studentWithAccount, wantError error,
+) func(*testing.T, []studentWithAccount, int, error) {
+	return func(t *testing.T, got []studentWithAccount, count int, err error) {
+		t.Helper()
+
+		if !errors.Is(err, wantError) {
+			t.Fatalf("listStudents error = %v, want %v", err, wantError)
+		}
+
+		if count != len(want) || !slices.Equal(got, want) {
+			t.Errorf("listStudents = (%v, %d), want (%v, %d)", got, count, want, len(want))
+		}
 	}
 }

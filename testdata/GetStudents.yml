@@ -1,0 +1,25 @@
+teachers:
+  - id: 1
+  - id: 2
+
+classes:
+  - { id: 1, name: クラスA }
+  - { id: 2, name: クラスB }
+
+class_teachers:
+  - { class_id: 1, teacher_id: 1 }
+  - { class_id: 2, teacher_id: 2 }
+
+students:
+  - { id: 10, name: Williams, class_id: 1 }
+  - { id: 2, name: 鈴木, class_id: 2 }
+  - { id: 7, name: 小田原, class_id: 1 }
+  - { id: 4, name: 加藤, class_id: 1 }
+  - { id: 1, name: 佐藤, class_id: 1 }
+
+student_accounts:
+  - { student_id: 1, login_id: foo123 }
+  - { student_id: 2, login_id: bar456 }
+  - { student_id: 4, login_id: hoge0000 }
+  - { student_id: 7, login_id: fizz9999 }
+  - { student_id: 10, login_id: "xxx:42" }
